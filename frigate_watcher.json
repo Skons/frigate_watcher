@@ -1,0 +1,14 @@
+{
+    "mqtt": {
+        "broker": "",
+        "port": 1883,
+        "username": "",
+        "password": ",
+        "base_topic": "frigate_watcher",
+        "frigate_base_topic": "frigate"
+    },
+    "frigate_url": ",
+    "log_level": "debug",
+    "failure_count_treshold": 5,
+    "restart": true
+}
