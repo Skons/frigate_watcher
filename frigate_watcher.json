@@ -3,12 +3,19 @@
         "broker": "",
         "port": 1883,
         "username": "",
-        "password": ",
+        "password": "",
         "base_topic": "frigate_watcher",
         "frigate_base_topic": "frigate"
     },
-    "frigate_url": ",
-    "log_level": "debug",
+    "log": {
+        "level": "debug",
+        "copy": {
+            "frigate":true,
+            "go2rtc":true,
+            "nginx":true
+        }
+    },
+    "frigate_url": "",
     "failure_count_treshold": 5,
     "restart": true
 }

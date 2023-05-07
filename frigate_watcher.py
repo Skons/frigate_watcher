@@ -32,6 +32,22 @@ def on_message(client, userdata, message):
   else:
     logger.warning(f"Unknown topic '{message_topic}'")
 
+def copy_log(type,timestamp_for_log):
+  '''
+  Get the log file from the frigate api and store it to disk
+  '''
+  global frigate_base_url,current_folder
+  logs_url = frigate_base_url + '/api/logs/' + type
+  try:
+    log_resp = requests.get(logs_url)
+    logger.info(f"Status Code of '{logs_url}' is '{log_resp.status_code}'")
+    log_file = os.path.join(current_folder, timestamp_for_log + "_" + type + ".log")
+    with open(log_file, 'wb') as f:
+      f.write(log_resp.content)
+    logger.info(f"'{type}' logs have been written to '{log_file}'")
+  except requests.exceptions.RequestException as e:
+    logger.error('%s', e)
+
 # get config file
 current_folder = os.path.dirname(os.path.realpath(__file__))
 config_file = os.path.join(current_folder,"frigate_watcher.json")
@@ -48,8 +64,9 @@ except ValueError:  # includes simplejson.decoder.JSONDecodeError
 
 # define logger
 loglevel = 'info'
-if 'log_level' in configuration:
-  loglevel = configuration['log_level'].upper()
+if 'log' in configuration:
+  if 'level' in configuration['log']:
+    loglevel = configuration['log']['level'].upper()
 
 log_file = os.path.join(current_folder,"frigate_watcher.log")
 formatter = logging.Formatter('%(asctime)s.%(msecs)03d %(name)s %(levelname)s	%(message)s','%Y-%m-%d %H:%M:%S')
@@ -161,7 +178,20 @@ for (k, v) in frigate_stats.items():
           logger.info(f"Frigate last reboot time '{last_registered_reboot}' is unknown with error '{e}'")
 
         # initiate frigate restart
-        logger.warning(f"Camera '{camera_name}' has got '{new_state}' of the maximum '{max_failures}' failures, restarting frigate with topic '{frigate_restart_topic}'")
+        logger.warning(f"Camera '{camera_name}' has got '{new_state}' of the maximum '{max_failures}' failures, restarting frigate with topic '{frigate_restart_topic}' after copying logs")
+
+        timestamp_for_log = time.strftime("%Y%m%d-%H%M%S")
+        if 'log' in configuration:
+          if 'copy' in configuration['log']:
+            if 'frigate' in configuration['log']['copy'] and configuration['log']['copy']['frigate']:
+              copy_log('frigate',timestamp_for_log)
+
+            if 'go2rtc' in configuration['log']['copy'] and configuration['log']['copy']['go2rtc']:
+              copy_log('go2rtc',timestamp_for_log)
+
+            if 'nginx' in configuration['log']['copy'] and configuration['log']['copy']['nginx']:
+              copy_log('nginx',timestamp_for_log)
+
         sent_restart = True
         last_reboot = str(datetime.datetime.utcnow().replace(tzinfo=datetime.timezone.utc).isoformat())
         client.publish(frigate_restart_topic, "", 0, True)

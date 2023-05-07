@@ -16,15 +16,31 @@ This script is not meant to run as a service, it could be a cron job for every x
         "broker": "", //the address of the mqtt broker
         "port": 1883,
         "username": "", //the username to connect to the broker
-        "password": ", //the password to connect to the broker
+        "password": "", //the password to connect to the broker
         "base_topic": "frigate_watcher", //the base topic to report to
         "frigate_base_topic": "frigate" //the base topic of frigate
     },
-    "frigate_url": ", //the url of frigate
-    "log_level": "debug",
+    "log": {
+        "level": "debug", //set the log level
+        "copy": { //copy the specified log before restart, it is copied to the folder of the script
+            "frigate":true,
+            "go2rtc":true,
+            "nginx":true
+        }
+    },
+    "frigate_url": "", //the url of frigate
     "failure_count_treshold": 5, //the number of consecutive failures before a reboot is initiated
     "restart": true //define of the reboot should be initiated
 ```
+
+## Cron
+
+If you want to run this script through cron, use the following configurateion for a job every minute.
+
+```
+* * * * * python3 /path/to/frigate_watcher.py
+```
+
 
 ## Home Assistant
 
@@ -72,3 +88,11 @@ This automation will notify when a restart is initiated by frigate_watcher. Chan
           title: "Frigate watcher"
           message: "Frigate will be restared, got {{ trigger.payload_json | string }} failure counts on topic {{ trigger.topic | string }}"
 ```
+
+## Changelog
+
+### 2023.5.7.1
+- Added copy log before reboot
+
+### 2023.5.4.1
+- Initial release
